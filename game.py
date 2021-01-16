@@ -14,14 +14,19 @@ class Game:
 
     def play(self, player):
         if player == 1:
+            while not self.play_computer(0):  # генерируем поле, пробуем решить, если решения нет, генерируем новое
+                self.board = generator.generate(81 - self.amount)
+                self.start_board = copy.deepcopy(self.board)
+            self.board = copy.deepcopy(self.start_board)
             result = self.play_human()
             if result:
                 print(self.board)
                 print("Congratulations! You've won!")
             else:
-                print("Impossible to solve or you've done mistakes")
+                print("Thank you for playing!")
+                exit(0)
         else:
-            self.play_computer()
+            self.play_computer(True)
 
     def play_human(self):
         while self.amount > 0:
@@ -79,20 +84,24 @@ class Game:
                     print("Value is not in the list")
         return True
 
-    def play_computer(self):
-        print(self.board)
-        result, temp_board = self.make_move(self.board)
-        self.print_at(9, 9, "\n")
-        if result:
-            print("Sudoku is solved:")
-            print(temp_board)
-            print("Moves: ")
-            for i in range(len(self.moves) - 1, -1, -1):
-                print(self.moves[i])
+    def play_computer(self, debug):
+        if debug:
+            print(self.board)
+        result, temp_board = self.make_move(self.board, debug)
+        if debug:
+            self.print_at(9, 9, "\n")
+            if result:
+                print("Sudoku is solved:")
+                print(temp_board)
+                print("Moves: ")
+                for i in range(len(self.moves) - 1, -1, -1):
+                    print(self.moves[i])
+            else:
+                print("Solution doesn't exist")
         else:
-            print("Solution doesn't exist")
+            return result
 
-    def make_move(self, temp_board):
+    def make_move(self, temp_board, debug):
         current_board = copy.deepcopy(temp_board)
         row, col, values = current_board.find_optimal_cell()
         if row == 10 and col == 10 and len(values) == 0:
@@ -101,13 +110,16 @@ class Game:
             return False, set()
         for value in values:
             current_board.set_value(row, col, value)
-            time.sleep(.1)
-            self.print_at(row, col, value)
-            result, buff = self.make_move(current_board)
+            if debug:
+                time.sleep(.1)
+                self.print_at(row, col, value)
+            result, buff = self.make_move(current_board, debug)
             if result:
-                self.moves.append("Row: {}, col: {}, value: {}".format(row, col, value))
+                if debug:
+                    self.moves.append("Row: {}, col: {}, value: {}".format(row, col, value))
                 return result, buff
-        self.print_at(row, col, 0)
+        if debug:
+            self.print_at(row, col, 0)
         return False, set()
 
     def print_at(self, row, col, to_write):
